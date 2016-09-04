@@ -7,15 +7,21 @@
 //
 
 #import "ViewController.h"
+#import "TcpServer.h"
 
 @interface ViewController ()
 
 @end
 
 @implementation ViewController
+{
+    TcpServer *server;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    server = [[TcpServer alloc]init];
+    [server startServerWithPort:1234];
     // Do any additional setup after loading the view, typically from a nib.
 }
 
