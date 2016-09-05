@@ -16,7 +16,11 @@
 {
     CFSocketRef sock;
     NSInputStream *inputStream;
-    
+}
+
+- (void) startServer
+{
+    [self startServerWithPort:DEFAULT_PORT];
 }
 
 - (void) startServerWithPort:(NSUInteger)port
@@ -27,7 +31,6 @@
         NSLog(@"creating socket failed");
         return;
     }
-    NSLog(@"start server");
     
     struct sockaddr_in sin;
     memset(&sin, 0, sizeof(sin));
@@ -51,12 +54,20 @@
     CFRunLoopSourceRef socketsource = CFSocketCreateRunLoopSource(kCFAllocatorDefault, sock, 0);
     CFRunLoopAddSource(CFRunLoopGetCurrent(), socketsource, kCFRunLoopDefaultMode);
     
+    
+    NSLog(@"server is starting with port=%lu", (unsigned long)port);
+    CFRunLoopRun();
 }
 
 - (void) stopServer
 {
     NSLog(@"stopServer");
     CFSocketInvalidate(sock);
+}
+
+- (void) sendMessage:(NSString *)message
+{
+    
 }
 
 void handleConnect(CFSocketRef sock, CFSocketCallBackType callbackType, CFDataRef dataRef, const void *data, void *info)

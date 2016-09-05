@@ -21,7 +21,10 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     server = [[TcpServer alloc]init];
-    [server startServerWithPort:1234];
+    [server setDelegate: (id <TcpServerDelegate>)self];
+    
+    
+    [server startServer];
     // Do any additional setup after loading the view, typically from a nib.
 }
 

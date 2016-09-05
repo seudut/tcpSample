@@ -8,9 +8,19 @@
 
 #import <Foundation/Foundation.h>
 
+#define DEFAULT_PORT 8888
+
+@protocol TcpServerDelegate <NSObject>
+- (void) onMessageReceived:(NSString *)message;
+@end
+
 @interface TcpServer : NSObject
 
+@property (nonatomic, weak) id<TcpServerDelegate> delegate;
+
+- (void) startServer;
 - (void) startServerWithPort:(NSUInteger) port;
 - (void) stopServer;
+- (void) sendMessage:(NSString *)message;
 
 @end
