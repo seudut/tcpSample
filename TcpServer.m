@@ -12,24 +12,36 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#define DEFAULT_PORT 8888
+
+//NSLog(@"%@", NSStringFromSelector(_cmd)); // Objective-C
+
+
+CFWriteStreamRef outStream;
+CFReadStreamRef  inStream;
+
+
+
 @implementation TcpServer
 {
     CFSocketRef sock;
-    NSInputStream *inputStream;
+    dispatch_queue_t queue;
+
 }
 
-- (void) startServer
+- (BOOL) startServer
 {
-    [self startServerWithPort:DEFAULT_PORT];
+    return [self startServerWithPort:DEFAULT_PORT];
 }
 
-- (void) startServerWithPort:(NSUInteger)port
+- (BOOL) initServer:(NSUInteger)port
 {
+    
     // create socket
-    sock = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, kCFSocketAcceptCallBack, handleConnect, NULL);
+    sock = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, kCFSocketAcceptCallBack, acceptCallback, NULL);
     if (!sock) {
-        NSLog(@"creating socket failed");
-        return;
+        NSLog(@"%@ create socket failed", NSStringFromSelector(_cmd));
+        return false;
     }
     
     struct sockaddr_in sin;
@@ -42,10 +54,10 @@
     CFDataRef sincfd = CFDataCreate(kCFAllocatorDefault, (UInt8 *)&sin, sizeof(sin));
     
     // bind
-    if (CFSocketSetAddress(sock, sincfd))
-    {
-        NSLog(@"setAddress failed");
-        return;
+    if (CFSocketSetAddress(sock, sincfd)) {
+        NSLog(@"%@ bind failed", NSStringFromSelector(_cmd));
+        CFRelease(sincfd);
+        return false;
     }
     
     CFRelease(sincfd);
@@ -54,28 +66,117 @@
     CFRunLoopSourceRef socketsource = CFSocketCreateRunLoopSource(kCFAllocatorDefault, sock, 0);
     CFRunLoopAddSource(CFRunLoopGetCurrent(), socketsource, kCFRunLoopDefaultMode);
     
+    // add observers for message received
+    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(getMessage:) name:@"TCPServerGetMessage" object:nil];
+
+    queue = dispatch_queue_create("tcp_queue", nil);
     
-    NSLog(@"server is starting with port=%lu", (unsigned long)port);
-    CFRunLoopRun();
+    NSLog(@"%@ server start success, port=%lu", NSStringFromSelector(_cmd), (unsigned long)port);
+    return true;
+}
+
+- (BOOL) startServerWithPort:(NSUInteger)port
+{
+    bool ret = [self initServer:port];
+    
+    if (ret) {
+        dispatch_async(queue, ^{
+            CFRunLoopRun();
+        });
+    } else {
+        [self stopServer];
+    }
+    
+    return ret;
 }
 
 - (void) stopServer
 {
-    NSLog(@"stopServer");
+    NSLog(@"%@", NSStringFromSelector(_cmd));
+
+    
+    // remove observers
+    [[NSNotificationCenter defaultCenter]removeObserver:self];
+//    dispatch_release(self->queue);
+    // close the sockets
     CFSocketInvalidate(sock);
 }
 
 - (void) sendMessage:(NSString *)message
 {
+    const char * string = [message UTF8String];
+    uint8_t * uint8b = (uint8_t *)string;
+    
+    if (outStream != NULL) {
+        CFWriteStreamWrite(outStream, uint8b, message.length);
+    }
     
 }
 
-void handleConnect(CFSocketRef sock, CFSocketCallBackType callbackType, CFDataRef dataRef, const void *data, void *info)
+void acceptCallback(CFSocketRef sock, CFSocketCallBackType callbackType, CFDataRef address, const void *data, void *info)
 {
-    if (callbackType == kCFSocketAcceptCallBack)
-        NSLog(@"Accept callback");
+    if (callbackType != kCFSocketAcceptCallBack)
+    {
+        NSLog(@"Unknown callback type");
+        exit(1);
+    }
+    NSLog(@"client connected");
     
-    return;
+//    CFReadStreamRef inStream;
+//    CFWriteStreamRef outStream;
+    CFStreamCreatePairWithSocket(kCFAllocatorDefault, *(CFSocketNativeHandle *)data, &inStream, &outStream);
+    
+    
+    CFStreamClientContext streamContext = {0,NULL,NULL,NULL};
+    if (!CFReadStreamSetClient(inStream, kCFStreamEventHasBytesAvailable, readStream, &streamContext)) {
+        exit(1);
+    }
+    if (!CFWriteStreamSetClient(outStream, kCFStreamEventCanAcceptBytes, writeStream, &streamContext)) {
+        exit(1);
+    }
+    
+    CFReadStreamScheduleWithRunLoop(inStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+    CFWriteStreamScheduleWithRunLoop(outStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+    CFReadStreamOpen(inStream);
+    CFWriteStreamOpen(outStream);
 }
+
+
+// observers functions
+
+-(void)getMessage:(NSNotification *)notification {
+    NSString * message = notification.object;
+    NSLog(@"getMessage");
+    if (message.length > 0) {
+        [self showMessage:message];
+//        [self performSelectorOnMainThread:@selector(showMessage:) withObject:message waitUntilDone:YES];
+//        dispatch_async (dispatch_get_main_queue(), ^{
+//            [self showMessage:message];
+    //});
+    }
+}
+
+
+-(void)showMessage:(NSString *)message {
+    NSLog(@"showMessage from getMessage, to");
+    [self.delegate onMessageReceived:message];
+}
+
+
+void readStream (CFReadStreamRef stream, CFStreamEventType type,void * clientCallBackInfo)
+{
+    UInt8 buff[255];
+    CFReadStreamRead(stream, buff, 255);
+    NSLog(@"readStream - %@", [NSString stringWithUTF8String:(char *)buff]);
+//    printf("received: %s",buff);
+    [[NSNotificationCenter defaultCenter]postNotificationName:@"TCPServerGetMessage" object:[NSString stringWithUTF8String:(const char*)buff]];
+}
+
+void writeStream (CFWriteStreamRef stream,CFStreamEventType eventType, void * clientCallBackInfo) {
+    outStream = stream;
+}
+
+
+
 
 @end

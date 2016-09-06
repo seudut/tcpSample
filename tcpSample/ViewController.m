@@ -9,7 +9,7 @@
 #import "ViewController.h"
 #import "TcpServer.h"
 
-@interface ViewController ()
+@interface ViewController () <TcpServerDelegate>
 
 @end
 
@@ -23,8 +23,11 @@
     server = [[TcpServer alloc]init];
     [server setDelegate: (id <TcpServerDelegate>)self];
     
-    
-    [server startServer];
+    if ([server startServer]) {
+        NSLog(@"===TcpServer started===");
+    }
+    NSLog(@"did load");
+        
     // Do any additional setup after loading the view, typically from a nib.
 }
 
@@ -32,5 +35,14 @@
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
+
+#pragma mark - TcpServerDelegate
+
+- (void)onMessageReceived:(NSString *)message
+{
+    NSLog(@"====%@====", message);
+    [server sendMessage:@"woshilipeng"];
+}
+
 
 @end
