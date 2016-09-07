@@ -15,6 +15,8 @@
 		76C36FC01D7C7F04000C228B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 76C36FBE1D7C7F04000C228B /* LaunchScreen.storyboard */; };
 		76C36FCB1D7C7F04000C228B /* tcpSampleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 76C36FCA1D7C7F04000C228B /* tcpSampleTests.m */; };
 		76C36FD61D7C7F04000C228B /* tcpSampleUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 76C36FD51D7C7F04000C228B /* tcpSampleUITests.m */; };
+		76C36FF61D7C8559000C228B /* TcpServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 76C36FF51D7C8559000C228B /* TcpServer.m */; };
+		76C36FF91D7C8568000C228B /* TcpClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 76C36FF81D7C8568000C228B /* TcpClient.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +53,10 @@
 		76C36FD11D7C7F04000C228B /* tcpSampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = tcpSampleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		76C36FD51D7C7F04000C228B /* tcpSampleUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = tcpSampleUITests.m; sourceTree = "<group>"; };
 		76C36FD71D7C7F04000C228B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		76C36FF41D7C8559000C228B /* TcpServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpServer.h; sourceTree = "<group>"; };
+		76C36FF51D7C8559000C228B /* TcpServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TcpServer.m; sourceTree = "<group>"; };
+		76C36FF71D7C8568000C228B /* TcpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpClient.h; sourceTree = "<group>"; };
+		76C36FF81D7C8568000C228B /* TcpClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TcpClient.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,6 +87,10 @@
 		76C36FA41D7C7F04000C228B = {
 			isa = PBXGroup;
 			children = (
+				76C36FF41D7C8559000C228B /* TcpServer.h */,
+				76C36FF51D7C8559000C228B /* TcpServer.m */,
+				76C36FF71D7C8568000C228B /* TcpClient.h */,
+				76C36FF81D7C8568000C228B /* TcpClient.m */,
 				76C36FAF1D7C7F04000C228B /* tcpSample */,
 				76C36FC91D7C7F04000C228B /* tcpSampleTests */,
 				76C36FD41D7C7F04000C228B /* tcpSampleUITests */,
@@ -270,6 +280,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				76C36FF91D7C8568000C228B /* TcpClient.m in Sources */,
+				76C36FF61D7C8559000C228B /* TcpServer.m in Sources */,
 				76C36FB81D7C7F04000C228B /* ViewController.m in Sources */,
 				76C36FB51D7C7F04000C228B /* AppDelegate.m in Sources */,
 				76C36FB21D7C7F04000C228B /* main.m in Sources */,
@@ -416,6 +428,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = tcpSample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = seudut.tcpSample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -427,6 +440,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = tcpSample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = seudut.tcpSample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -498,6 +512,7 @@
 				76C36FDC1D7C7F04000C228B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		76C36FDD1D7C7F04000C228B /* Build configuration list for PBXNativeTarget "tcpSampleTests" */ = {
 			isa = XCConfigurationList;
@@ -506,6 +521,7 @@
 				76C36FDF1D7C7F04000C228B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		76C36FE01D7C7F04000C228B /* Build configuration list for PBXNativeTarget "tcpSampleUITests" */ = {
 			isa = XCConfigurationList;
@@ -514,6 +530,7 @@
 				76C36FE21D7C7F04000C228B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

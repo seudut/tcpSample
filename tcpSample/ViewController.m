@@ -38,10 +38,15 @@
 
 #pragma mark - TcpServerDelegate
 
-- (void)onMessageReceived:(NSString *)message
+- (void)onMsgRecv:(NSString *)message
 {
     NSLog(@"====%@====", message);
-    [server sendMessage:@"woshilipeng"];
+//    [server sendMessage:@"woshilipeng"];
+}
+
+- (void)onConnected:(NSString *)remoteIp
+{
+    NSLog(@"remote IP %@", remoteIp);
 }
 
 

@@ -9,8 +9,8 @@
 #import <Foundation/Foundation.h>
 
 @protocol TcpServerDelegate <NSObject>
-- (void) onMessageReceived:(NSString *)message;
-//- (void) onConnected();
+- (void) onMsgRecv:(NSString *)message;
+- (void) onConnected:(NSString *)remoteIp;
 @end
 
 @interface TcpServer : NSObject

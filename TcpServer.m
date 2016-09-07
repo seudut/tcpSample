@@ -11,22 +11,25 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #define DEFAULT_PORT 8888
 
-//NSLog(@"%@", NSStringFromSelector(_cmd)); // Objective-C
+void readStream (CFReadStreamRef stream, CFStreamEventType type,void * clientCallBackInfo);
+void writeStream (CFWriteStreamRef stream,CFStreamEventType eventType, void * clientCallBackInfo);
+void acceptCallback(CFSocketRef sock, CFSocketCallBackType callbackType, CFDataRef address, const void *data, void *info);
 
 
-CFWriteStreamRef outStream;
-CFReadStreamRef  inStream;
+//CFWriteStreamRef outStream;
+//CFReadStreamRef  inStream;
 
-
+CFWriteStreamRef outputStream;
 
 @implementation TcpServer
 {
     CFSocketRef sock;
     dispatch_queue_t queue;
-
+    
 }
 
 - (BOOL) startServer
@@ -36,7 +39,6 @@ CFReadStreamRef  inStream;
 
 - (BOOL) initServer:(NSUInteger)port
 {
-    
     // create socket
     sock = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, kCFSocketAcceptCallBack, acceptCallback, NULL);
     if (!sock) {
@@ -66,9 +68,11 @@ CFReadStreamRef  inStream;
     CFRunLoopSourceRef socketsource = CFSocketCreateRunLoopSource(kCFAllocatorDefault, sock, 0);
     CFRunLoopAddSource(CFRunLoopGetCurrent(), socketsource, kCFRunLoopDefaultMode);
     
-    // add observers for message received
-    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(getMessage:) name:@"TCPServerGetMessage" object:nil];
-
+    // add observers for notifications from sockets
+    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(onMessageReceived:) name:@"OnMessageReceived" object:nil];
+    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(onClientConnected:) name:@"OnClientConnected" object:nil];
+    
+    // create queue for CFRunLoopRun
     queue = dispatch_queue_create("tcp_queue", nil);
     
     NSLog(@"%@ server start success, port=%lu", NSStringFromSelector(_cmd), (unsigned long)port);
@@ -93,11 +97,9 @@ CFReadStreamRef  inStream;
 - (void) stopServer
 {
     NSLog(@"%@", NSStringFromSelector(_cmd));
-
-    
     // remove observers
     [[NSNotificationCenter defaultCenter]removeObserver:self];
-//    dispatch_release(self->queue);
+//    dispatch_release(queue);
     // close the sockets
     CFSocketInvalidate(sock);
 }
@@ -107,8 +109,8 @@ CFReadStreamRef  inStream;
     const char * string = [message UTF8String];
     uint8_t * uint8b = (uint8_t *)string;
     
-    if (outStream != NULL) {
-        CFWriteStreamWrite(outStream, uint8b, message.length);
+    if (outputStream != NULL) {
+        CFWriteStreamWrite(outputStream, uint8b, message.length);
     }
     
 }
@@ -120,10 +122,24 @@ void acceptCallback(CFSocketRef sock, CFSocketCallBackType callbackType, CFDataR
         NSLog(@"Unknown callback type");
         exit(1);
     }
-    NSLog(@"client connected");
     
-//    CFReadStreamRef inStream;
-//    CFWriteStreamRef outStream;
+    // get remote IP
+    CFSocketNativeHandle nativeSockHandle = * (CFSocketNativeHandle *)data;
+    uint8_t name[SOCK_MAXADDRLEN];
+    socklen_t nameLen = sizeof(name);
+    if (getpeername(nativeSockHandle, (struct sockaddr *)name, &nameLen) !=0 ) {
+        NSLog(@"getpeername error");
+        exit(1);
+    }
+    
+    char * remoteIP = inet_ntoa(((struct sockaddr_in *)name)->sin_addr);
+    
+    // notify remote connected
+    NSLog(@"client connected - %@", [NSString stringWithUTF8String:remoteIP]);
+    [[NSNotificationCenter defaultCenter]postNotificationName:@"OnClientConnected" object:[NSString stringWithUTF8String:remoteIP]];
+    
+    CFReadStreamRef inStream;
+    CFWriteStreamRef outStream;
     CFStreamCreatePairWithSocket(kCFAllocatorDefault, *(CFSocketNativeHandle *)data, &inStream, &outStream);
     
     
@@ -144,36 +160,34 @@ void acceptCallback(CFSocketRef sock, CFSocketCallBackType callbackType, CFDataR
 
 // observers functions
 
--(void)getMessage:(NSNotification *)notification {
+- (void) onMessageReceived:(NSNotification *)notification {
     NSString * message = notification.object;
-    NSLog(@"getMessage");
+    NSLog(@"onMessageReceived");
     if (message.length > 0) {
-        [self showMessage:message];
-//        [self performSelectorOnMainThread:@selector(showMessage:) withObject:message waitUntilDone:YES];
-//        dispatch_async (dispatch_get_main_queue(), ^{
-//            [self showMessage:message];
-    //});
+        [self.delegate onMsgRecv:message];
     }
 }
 
-
--(void)showMessage:(NSString *)message {
-    NSLog(@"showMessage from getMessage, to");
-    [self.delegate onMessageReceived:message];
+- (void) onClientConnected:(NSNotification *)notification {
+//    NSString * ip = notification.object;
+//    NSLog(@"%@ - remote ip is %@", NSStringFromSelector(_cmd), ip);
+    [self.delegate onConnected:(NSString *)notification.object];
 }
 
 
 void readStream (CFReadStreamRef stream, CFStreamEventType type,void * clientCallBackInfo)
 {
-    UInt8 buff[255];
+    UInt8 buff[255] = {0};
     CFReadStreamRead(stream, buff, 255);
+//    printf("printf - stream =%s", buff);
+//    NSString * str = [[NSString alloc]initWithUTF8String:(const char *)buff];
+//    NSLog(@"readStream - %@", str);
     NSLog(@"readStream - %@", [NSString stringWithUTF8String:(char *)buff]);
-//    printf("received: %s",buff);
-    [[NSNotificationCenter defaultCenter]postNotificationName:@"TCPServerGetMessage" object:[NSString stringWithUTF8String:(const char*)buff]];
+    [[NSNotificationCenter defaultCenter]postNotificationName:@"OnMessageReceived" object:[NSString stringWithUTF8String:(const char*)buff]];
 }
 
 void writeStream (CFWriteStreamRef stream,CFStreamEventType eventType, void * clientCallBackInfo) {
-    outStream = stream;
+    outputStream = stream;
 }
 
 
