@@ -46,6 +46,10 @@ CFWriteStreamRef outputStream;
         return false;
     }
     
+    // set socket options
+    int optval = 1;
+    setsockopt(CFSocketGetNative(sock), SOL_SOCKET, SO_REUSEADDR, (void *)&optval, sizeof(optval));
+    
     struct sockaddr_in sin;
     memset(&sin, 0, sizeof(sin));
     sin.sin_len = sizeof(sin);
